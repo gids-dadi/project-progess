@@ -37,6 +37,7 @@ const clientType = new GraphQLObjectType({
   }),
 });
 
+// Querries
 const RootQuery = new GraphQLObjectType({
   name: "RootQueryType",
   fields: {
@@ -72,6 +73,10 @@ const RootQuery = new GraphQLObjectType({
     },
   },
 });
+
+
+// Mutation
+
 
 module.exports = new GraphQLSchema({
   query: RootQuery,
