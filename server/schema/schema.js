@@ -4,11 +4,12 @@ const {
   GraphQLString,
   GraphQLSchema,
   GraphQLList,
+  GraphQLNonNull,
 } = require("graphql");
 
 // Mongose Model
-const Project = require('../models/projectModel')
-const Client = require('../models/clientModel')
+const Project = require("../models/projectModel");
+const Client = require("../models/clientModel");
 
 // Define the project fields
 const projectType = new GraphQLObjectType({
@@ -18,10 +19,11 @@ const projectType = new GraphQLObjectType({
     name: { type: GraphQLString },
     description: { type: GraphQLString },
     status: { type: GraphQLString },
-    client: { type: clientType,
-    resolve(parent, args) {
-      return Client.findById(parent.clientId)
-    }
+    client: {
+      type: clientType,
+      resolve(parent, args) {
+        return Client.findById(parent.clientId);
+      },
     },
   }),
 });
@@ -74,10 +76,61 @@ const RootQuery = new GraphQLObjectType({
   },
 });
 
-
 // Mutation
+const myMutation = new GraphQLObjectType({
+  name: "Mutation",
+  fields: {
+    // Mutation to add client
+    addClient: {
+      type: clientType,
+      args: {
+        name: { type: GraphQLNonNull(GraphQLString) },
+        email: { type: GraphQLNonNull(GraphQLString) },
+        phone: { type: GraphQLNonNull(GraphQLString) },
+      },
+      resolve(parent, args) {
+        const client = new Client({
+          name: args.name,
+          email: args.email,
+          phone: args.phone,
+        });
+        return client.save();
+      },
+    },
+    // Mutation to delete client
+    deleteClient: {
+      type: clientType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID)},
+      },
+      resolve(parent, args) {
+        return Client.findByIdAndRemove(args.id)
+      },
+    },
+    // Mutation to add a project
+    addProject: {
+      type: projectType,
+      args: {
+        name: {type: GraphQLNonNull(GraphQLString)},
+        description: {type: GraphQLNonNull(GraphQLString)},
+        status: {
+          type: new GraphQLEnumType({
+            name: 'ProjectStatus',
+            'new': { value: 'Not Started'},
+            'started': { value: 'In progrss'},
+            'ended': { value: 'completed'},
+          }),
+          defaultValue: 'new'
 
+        },
+        clientId: {type: GraphQLNonNull(GraphQLID)}
+      }
+
+    }
+  },
+});
 
 module.exports = new GraphQLSchema({
   query: RootQuery,
+  mutation: myMutation,
 });
